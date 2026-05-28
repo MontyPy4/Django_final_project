@@ -1,0 +1,11 @@
+django>=4.2.16,<5.0
+djangorestframework
+djangorestframework-simplejwt
+django-filter
+drf-yasg
+mysqlclient
+python-dotenv
+django-cors-headers
+Pillow
+pymongo
+django-redis

@@ -1,0 +1,11 @@
+venv/
+.env
+
+db.sqlite3
+db.sqlite3-journal
+*.log
+logs/
+__pycache__/
+*.pyc
+.idea/
+*.egg-info/

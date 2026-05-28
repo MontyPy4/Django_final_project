@@ -1,0 +1,97 @@
+services:
+
+  redis:
+    image: redis:7-alpine
+    container_name: rental_redis
+    restart: unless-stopped
+    # Чистый кеш: без AOF, без RDB-снимков. Перезапуск = чистая память.
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - rental_net
+
+  db:
+    image: mysql:8.0
+    container_name: rental_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-rental_db}
+      MYSQL_USER: ${DB_USER:-rental_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-rental_password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      # Открыто наружу для MySQL Workbench / DBeaver. Убрать на проде.
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
+             "-u", "root", "-p${DB_ROOT_PASSWORD:-root_password}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - rental_net
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rental_web:latest
+    container_name: rental_web
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Перекрываем .env: внутри compose-сети БД доступна как 'db'.
+      DB_HOST: db
+      DB_PORT: "3306"
+      USE_SQLITE: "False"
+      ALLOWED_HOSTS: "*"
+      REDIS_URL: redis://redis:6379/1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8000"
+    volumes:
+      - logs:/app/logs
+      - static:/app/staticfiles
+      - media:/app/media
+    networks:
+      - rental_net
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: rental_nginx
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - static:/app/staticfiles:ro
+      - media:/app/media:ro
+    networks:
+      - rental_net
+
+volumes:
+  mysql_data:
+  logs:
+  static:
+  media:
+
+networks:
+  rental_net:
+    driver: bridge

@@ -1,0 +1,49 @@
+# VCS / IDE
+.git
+.gitignore
+.idea
+.vscode
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+.coverage
+htmlcov
+
+# Virtualenvs
+.venv
+venv
+env
+
+# Local DB / logs / temp
+db.sqlite3
+db.sqlite3-journal
+logs/
+*.log
+*.sqlite3
+
+# Local secrets / env (передаются через docker-compose, не запекаются в образ)
+.env
+.env.local
+.env.*.local
+
+# Docker meta-файлы (внутрь образа не нужны)
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+.dockerignore
+
+# Документация
+README.md
+*.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Postman
+*.postman_collection.json
